@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API de Predicción y Reentrenamiento</title>
     <!-- Incluir Bootstrap -->
@@ -9,9 +10,8 @@
 </head>
 <body>
     <div class="container mt-5">
-        <!-- Introducción a la aplicación -->
-        <h1 class="text-center mb-4">Subir Archivos para Predicción y Reentrenamiento</h1>
-        
+        <h1 class="text-center">Subir Archivos para Predicción y Reentrenamiento</h1>
+
         <div class="card bg-light p-4">
             <p class="lead text-center mb-4">
                 Esta aplicación te permite predecir a cuál Objetivo de Desarrollo Sostenible (ODS) pertenece un texto dado.
@@ -66,6 +66,7 @@
                 <p id="retrainErrorMessage" class="alert alert-danger mt-3" style="display: none;">Ocurrió un error al reentrenar el modelo.</p>
             </div>
         </div>
+
     </div>
 
     <!-- Bootstrap JS -->
@@ -73,7 +74,7 @@
 
     <!-- Script para manejar los formularios -->
     <script>
-        // Función para manejar la predicción
+        // Función para manejar la predicción y descarga de archivo
         const predictionForm = document.getElementById('predictionForm');
         predictionForm.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -86,11 +87,24 @@
             });
 
             if (response.ok) {
+                // Mostrar el mensaje de éxito
                 document.getElementById('predictionSuccessMessage').style.display = 'block';
-                document.getElementById('predictionErrorMessage').style.display = 'none';
+                
+                // Descargar el archivo Excel con las predicciones
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'predicciones.xlsx';  // Nombre del archivo descargado
+                document.body.appendChild(a);  // Agregar enlace temporalmente al DOM
+                a.click();  // Hacer clic programáticamente para iniciar la descarga
+                document.body.removeChild(a);  // Remover el enlace del DOM
             } else {
-                document.getElementById('predictionSuccessMessage').style.display = 'none';
-                document.getElementById('predictionErrorMessage').style.display = 'block';
+                // Mostrar error si falla la predicción
+                const result = await response.json();
+                document.getElementById('predictionSuccessMessage').style.color = 'red';
+                document.getElementById('predictionSuccessMessage').innerText = "Error al hacer predicciones: " + JSON.stringify(result);
+                document.getElementById('predictionSuccessMessage').style.display = 'block';
             }
         });
 
@@ -103,22 +117,8 @@
                 method: 'POST',
                 body: formData
             });
-
             const result = await response.json();
-            if (response.ok) {
-                // Mostrar los valores del reentrenamiento
-                document.getElementById('precisionValue').innerText = (result.precision * 100).toFixed(2) + "%";
-                document.getElementById('recallValue').innerText = (result.recall * 100).toFixed(2) + "%";
-                document.getElementById('f1ScoreValue').innerText = (result.f1_score * 100).toFixed(2) + "%";
-                
-                // Mostrar los mensajes de éxito
-                document.getElementById('retrainSuccessMessage').style.display = 'block';
-                document.getElementById('retrainErrorMessage').style.display = 'none';
-            } else {
-                // Mostrar el mensaje de error
-                document.getElementById('retrainSuccessMessage').style.display = 'none';
-                document.getElementById('retrainErrorMessage').style.display = 'block';
-            }
+            document.getElementById('retrainResult').innerText = JSON.stringify(result);
         });
     </script>
 </body>
