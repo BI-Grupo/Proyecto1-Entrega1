@@ -10,6 +10,8 @@ from sklearn.model_selection import train_test_split
 import os
 from sklearn.metrics import precision_score, recall_score, f1_score
 from DataModel import DataModel
+from fastapi.responses import StreamingResponse
+from io import BytesIO
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -20,22 +22,33 @@ def get_form(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/predict")
-def make_predictions(dataModel: DataModel):
-    df = pd.DataFrame(dataModel.dict(), columns=dataModel.dict().keys(), index=[0])
-    df.columns = dataModel.columns()
+async def make_predictions(file: UploadFile):
 
     try:
+        contents = await file.read()
+        df = pd.read_excel(BytesIO(contents))
+
         model = load("modelo.joblib")
-        result = model.predict(df)
-        return {"prediction": result.tolist()}
+        df["prediction"] = model.predict(df)
+        
+        # Crear un archivo Excel con las predicciones
+        output = BytesIO()
+        df.to_excel(output, index=False)
+        output.seek(0)
+
+        # Devolver el archivo Excel con las predicciones
+        return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                 headers={"Content-Disposition": "attachment; filename=predicciones.xlsx"})
     except Exception as e:
         return {"error": str(e)}
     
 @app.post("/retrain")
-def retrain_model(file: UploadFile):
+async def retrain_model(file: UploadFile):
     # Leer el archivo Excel recibido
     try:
-        new_data = pd.read_excel(file.file)
+        contents = await file.read()
+        new_data = pd.read_excel(BytesIO(contents))
+        
     except Exception as e:
         return {"error": f"Error leyendo el archivo: {str(e)}"}
     
