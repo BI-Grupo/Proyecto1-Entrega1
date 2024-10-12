@@ -29,7 +29,7 @@ async def make_predictions(file: UploadFile):
         df = pd.read_excel(BytesIO(contents))
 
         model = load("modelo.joblib")
-        df["prediction"] = model.predict(df)
+        df["sdg"] = model.predict(df["Textos_espanol"])
         
         # Crear un archivo Excel con las predicciones
         output = BytesIO()

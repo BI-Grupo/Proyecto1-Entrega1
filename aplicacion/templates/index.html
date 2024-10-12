@@ -23,7 +23,7 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Realizar Predicción</button>
                 </form>
-                <p id="predictionResult" class="mt-3"></p>
+                <p id="predictionSuccessMessage" style="color: green; display: none;">¡Predicciones hechas exitosamente!</p>
             </div>
         </div>
 
@@ -54,18 +54,41 @@
 
     <!-- Script para manejar los formularios -->
     <script>
+        // Función para manejar la predicción y descarga de archivo
         const predictionForm = document.getElementById('predictionForm');
         predictionForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             const formData = new FormData(predictionForm);
+            
+            // Hacer la solicitud POST al backend
             const response = await fetch('/predict', {
                 method: 'POST',
                 body: formData
             });
-            const result = await response.json();
-            document.getElementById('predictionResult').innerText = JSON.stringify(result);
+
+            if (response.ok) {
+                // Mostrar el mensaje de éxito
+                document.getElementById('predictionSuccessMessage').style.display = 'block';
+                
+                // Descargar el archivo Excel con las predicciones
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'predicciones.xlsx';  // Nombre del archivo descargado
+                document.body.appendChild(a);  // Agregar enlace temporalmente al DOM
+                a.click();  // Hacer clic programáticamente para iniciar la descarga
+                document.body.removeChild(a);  // Remover el enlace del DOM
+            } else {
+                // Mostrar error si falla la predicción
+                const result = await response.json();
+                document.getElementById('predictionSuccessMessage').style.color = 'red';
+                document.getElementById('predictionSuccessMessage').innerText = "Error al hacer predicciones: " + JSON.stringify(result);
+                document.getElementById('predictionSuccessMessage').style.display = 'block';
+            }
         });
 
+        // Función para manejar el reentrenamiento
         const retrainForm = document.getElementById('retrainForm');
         retrainForm.addEventListener('submit', async function(event) {
             event.preventDefault();
