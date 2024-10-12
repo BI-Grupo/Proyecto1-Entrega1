@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 import os
 from sklearn.metrics import precision_score, recall_score, f1_score
 from DataModel import DataModel
+import numpy as np
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 
@@ -30,6 +31,22 @@ async def make_predictions(file: UploadFile):
 
         model = load("modelo.joblib")
         df["sdg"] = model.predict(df["Textos_espanol"])
+        predicciones = df["sdg"].copy()
+        probabilidades = model.predict_proba(df["Textos_espanol"])
+        probabilidad_asignada = []
+        # Convertir predicciones a índices de la clase predicha
+        for pred, prob in zip(predicciones, probabilidades):
+            if pred == 3:
+                probabilidad_asignada.append(f"{prob[0] * 100:.2f}%")  # Probabilidad asociada a clase 3
+            elif pred == 4:
+                probabilidad_asignada.append(f"{prob[1] * 100:.2f}%")  # Probabilidad asociada a clase 4
+            elif pred == 5:
+                probabilidad_asignada.append(f"{prob[2] * 100:.2f}%")  # Probabilidad asociada a clase 5
+            else:
+                probabilidad_asignada.append(None)
+        # Obtener las probabilidades de la clase predicha
+        #probabilidad_asignada = [probabilidades[i][pred] for i, pred in enumerate(predicciones)]
+        df["Probabilidad"] = probabilidad_asignada
         
         # Crear un archivo Excel con las predicciones
         output = BytesIO()
