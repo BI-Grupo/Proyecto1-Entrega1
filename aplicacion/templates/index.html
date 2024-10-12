@@ -54,7 +54,7 @@
                 </form>
 
                 <!-- Esta parte está inicialmente oculta -->
-                <div id="retrainSuccessMessage" class="alert alert-success mt-3" style="display: none;">
+                <div id="retrainSuccessMessage" class="alert alert-success mt-3" style="display: none">
                     <strong>¡Reentrenamiento exitoso!</strong> Aquí están los resultados del reentrenamiento:
                     <ul>
                         <li><strong>Precisión:</strong> <span id="precisionValue"></span></li>
@@ -118,7 +118,20 @@
                 body: formData
             });
             const result = await response.json();
-            document.getElementById('retrainResult').innerText = JSON.stringify(result);
+            if (response.ok) {
+                // Mostrar los valores del reentrenamiento
+                document.getElementById('precisionValue').innerText = (result.precision * 100).toFixed(2) + "%";
+                document.getElementById('recallValue').innerText = (result.recall * 100).toFixed(2) + "%";
+                document.getElementById('f1ScoreValue').innerText = (result.f1_score * 100).toFixed(2) + "%";
+                
+                // Mostrar los mensajes de éxito
+                document.getElementById('retrainSuccessMessage').style.display = 'block';
+                document.getElementById('retrainErrorMessage').style.display = 'none';
+            } else {
+                // Mostrar el mensaje de error
+                document.getElementById('retrainSuccessMessage').style.display = 'none';
+                document.getElementById('retrainErrorMessage').style.display = 'block';
+            }
         });
     </script>
 </body>
