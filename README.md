@@ -3,6 +3,9 @@
 
 ## Deployment
 
+> **Nota:** Este proyecto debe abrirse utilizando Anaconda. Asegúrate de tener Anaconda instalado y activa el entorno correspondiente antes de ejecutar los comandos mencionados.
+
+
 1.  **Instalación de librerías**: Antes de poner en marcha la API, es necesario instalar las librerías requeridas. Puedes hacerlo ejecutando la siguiente línea en tu consola:
 
 ```bash
