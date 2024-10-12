@@ -14,8 +14,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 nltk.download('stopwords')
 comunes = set(stopwords.words('spanish'))
-r_ods = pd.read_excel('./data/registros.xlsx')
-registros = r_ods.copy()
+registros = pd.read_excel('./data/registros.xlsx')
+ 
 
 class TextCleaner(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
