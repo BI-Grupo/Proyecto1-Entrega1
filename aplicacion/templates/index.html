@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API de Predicción y Reentrenamiento</title>
     <!-- Incluir Bootstrap -->
@@ -10,12 +9,26 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Subir Archivos para Predicción y Reentrenamiento</h1>
+        <!-- Introducción a la aplicación -->
+        <h1 class="text-center mb-4">Subir Archivos para Predicción y Reentrenamiento</h1>
+        
+        <div class="card bg-light p-4">
+            <p class="lead text-center mb-4">
+                Esta aplicación te permite predecir a cuál Objetivo de Desarrollo Sostenible (ODS) pertenece un texto dado.
+                Las predicciones se realizan entre los siguientes ODS:
+            </p>
+            <ul class="list-group list-group-flush text-center mb-4">
+                <li class="list-group-item list-group-item-primary"><strong>ODS 3:</strong> Salud y bienestar</li>
+                <li class="list-group-item list-group-item-secondary"><strong>ODS 4:</strong> Educación de calidad</li>
+                <li class="list-group-item list-group-item-info"><strong>ODS 5:</strong> Igualdad de género</li>
+            </ul>
+        </div>
 
         <!-- Sección de predicciones -->
-        <div class="card mt-4">
+        <div class="card mt-5 bg-white shadow-sm">
             <div class="card-body">
-                <h2>Realizar Predicciones</h2>
+                <h2 class="text-primary">Realizar Predicciones</h2>
+                <p>Para realizar predicciones, selecciona un archivo en formato Excel (.xlsx) que contenga una columna llamada <strong>"Textos_espanol"</strong>, donde se encuentren los textos sobre los que deseas predecir el ODS. Luego, haz clic en el botón <strong>"Realizar Predicción"</strong>.</p>
                 <form id="predictionForm" action="/predict" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="predictionFile" class="form-label">Seleccionar archivo para predicción (Excel):</label>
@@ -23,14 +36,15 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Realizar Predicción</button>
                 </form>
-                <p id="predictionSuccessMessage" style="color: green; display: none;">¡Predicciones hechas exitosamente!</p>
+                <p id="predictionSuccessMessage" class="alert alert-success mt-3" style="display: none;">¡Predicciones hechas exitosamente!</p>
             </div>
         </div>
 
         <!-- Sección de reentrenamiento -->
-        <div class="card mt-4">
+        <div class="card mt-4 bg-white shadow-sm">
             <div class="card-body">
-                <h2>Reentrenar el Modelo</h2>
+                <h2 class="text-success">Reentrenar el Modelo</h2>
+                <p>Para reentrenar el modelo, selecciona un archivo Excel (.xlsx) que contenga dos columnas: <strong>"Textos_espanol"</strong> con los textos, y <strong>"sdg"</strong> con los ODS correspondientes a cada texto. El sistema añadirá los nuevos datos al conjunto actual y reentrenará el modelo. Luego, haz clic en <strong>"Reentrenar Modelo"</strong>.</p>
                 <form id="retrainForm" action="/retrain" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="retrainFile" class="form-label">Seleccionar archivo para reentrenamiento (Excel):</label>
@@ -38,14 +52,19 @@
                     </div>
                     <button type="submit" class="btn btn-success">Reentrenar Modelo</button>
                 </form>
-                <p id="retrainResult" class="mt-3"></p>
-            </div>
-        </div>
 
-        <!-- Imágenes relacionadas (opcional) -->
-        <div class="mt-5 text-center">
-            <img src="ruta_a_tu_imagen_1.png" alt="Imagen relacionada 1" class="img-fluid rounded mb-4" style="max-width: 300px;">
-            <img src="ruta_a_tu_imagen_2.png" alt="Imagen relacionada 2" class="img-fluid rounded" style="max-width: 300px;">
+                <!-- Esta parte está inicialmente oculta -->
+                <div id="retrainSuccessMessage" class="alert alert-success mt-3" style="display: none;">
+                    <strong>¡Reentrenamiento exitoso!</strong> Aquí están los resultados del reentrenamiento:
+                    <ul>
+                        <li><strong>Precisión:</strong> <span id="precisionValue"></span></li>
+                        <li><strong>Recall:</strong> <span id="recallValue"></span></li>
+                        <li><strong>F1 Score:</strong> <span id="f1ScoreValue"></span></li>
+                    </ul>
+                </div>
+                
+                <p id="retrainErrorMessage" class="alert alert-danger mt-3" style="display: none;">Ocurrió un error al reentrenar el modelo.</p>
+            </div>
         </div>
     </div>
 
@@ -54,7 +73,7 @@
 
     <!-- Script para manejar los formularios -->
     <script>
-        // Función para manejar la predicción y descarga de archivo
+        // Función para manejar la predicción
         const predictionForm = document.getElementById('predictionForm');
         predictionForm.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -67,24 +86,11 @@
             });
 
             if (response.ok) {
-                // Mostrar el mensaje de éxito
                 document.getElementById('predictionSuccessMessage').style.display = 'block';
-                
-                // Descargar el archivo Excel con las predicciones
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'predicciones.xlsx';  // Nombre del archivo descargado
-                document.body.appendChild(a);  // Agregar enlace temporalmente al DOM
-                a.click();  // Hacer clic programáticamente para iniciar la descarga
-                document.body.removeChild(a);  // Remover el enlace del DOM
+                document.getElementById('predictionErrorMessage').style.display = 'none';
             } else {
-                // Mostrar error si falla la predicción
-                const result = await response.json();
-                document.getElementById('predictionSuccessMessage').style.color = 'red';
-                document.getElementById('predictionSuccessMessage').innerText = "Error al hacer predicciones: " + JSON.stringify(result);
-                document.getElementById('predictionSuccessMessage').style.display = 'block';
+                document.getElementById('predictionSuccessMessage').style.display = 'none';
+                document.getElementById('predictionErrorMessage').style.display = 'block';
             }
         });
 
@@ -97,8 +103,22 @@
                 method: 'POST',
                 body: formData
             });
+
             const result = await response.json();
-            document.getElementById('retrainResult').innerText = JSON.stringify(result);
+            if (response.ok) {
+                // Mostrar los valores del reentrenamiento
+                document.getElementById('precisionValue').innerText = (result.precision * 100).toFixed(2) + "%";
+                document.getElementById('recallValue').innerText = (result.recall * 100).toFixed(2) + "%";
+                document.getElementById('f1ScoreValue').innerText = (result.f1_score * 100).toFixed(2) + "%";
+                
+                // Mostrar los mensajes de éxito
+                document.getElementById('retrainSuccessMessage').style.display = 'block';
+                document.getElementById('retrainErrorMessage').style.display = 'none';
+            } else {
+                // Mostrar el mensaje de error
+                document.getElementById('retrainSuccessMessage').style.display = 'none';
+                document.getElementById('retrainErrorMessage').style.display = 'block';
+            }
         });
     </script>
 </body>
